@@ -4,12 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Historial</title>
-  <link rel="stylesheet" href="Styles.css"/>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <div class="wrapper">
-
-    <!-- Contenido Principal -->
+    <aside class="sidebar">
+      <h2>ADMINISTRACIÓN</h2>
+      <nav class="sidebar-nav">
+        <a href="Clientes.html">Clientes</a>
+        <a href="Compras.html">Compras</a>
+        <a href="Stock.html">Stock</a>
+        <a href="Ranking.html">Ranking</a>
+      </nav>
+      <div class="logged-info">Sesión iniciada como:<br><strong>UrbanStyle Admin</strong></div>
+    </aside>
     <div class="main-content">
       <header>
         <div class="logo">
@@ -22,32 +30,21 @@
           <a href="index.html#marcas">Marcas</a>
           <a href="Historial.html">Historial</a>
           <a href="Carrito.html">
-          <img src="img/carrito.png" alt="Carrito" class="cart-img"/>
+            <img src="img/carrito.png" alt="Carrito" class="cart-img"/>
           </a>
         </nav>
       </header>
-
-      <!-- Sidebar Izquierdo -->
-      <aside class="sidebar">
-        <h2>ADMINISTRACIÓN</h2>
-        <nav class="sidebar-nav">
-          <a href="Clientes.html">Clientes</a>
-          <a href="Compras.html">Compras</a>
-          <a href="Stock.html">Stock</a>
-          <a href="Ranking.html">Ranking</a>
-        </nav>
-        <div class="logged-info">Sesión iniciada como:<br><strong>UrbanStyle Admin</strong></div>
-      </aside>
-
-      <!-- Se eliminó el bloque <main> con los botones -->
-
-      <div id="resultado"></div>
+      <main>
+        <h1>Historial de actividad</h1>
+        <div id="resultado">
+          <!-- Aquí puedes agregar dinámicamente el historial con JS -->
+          <p>No hay actividades recientes.</p>
+        </div>
+      </main>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
-
 
 
