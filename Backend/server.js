@@ -23,14 +23,11 @@ app.use(express.json());
 // RUTAS API PARA CLIENTES
 // ====================================================================================================
 
-/**
- * Ruta GET: /api/clientes
- * Esta ruta devuelve todos los registros de la tabla Clientes desde la base de datos SQL Server
- */
+// GET: /api/clientes - Obtener todos los clientes (sin contraseñas)
 app.get('/api/clientes', async (req, res) => {
   try {
     const pool = await getConnection();
-    const result = await pool.request().query('SELECT * FROM Clientes');
+    const result = await pool.request().query('SELECT ID, Nombre, Apellido, Email, Telefono, Direccion, DNI FROM Clientes');
     res.json(result.recordset);
   } catch (err) {
     console.error('❌ Error al obtener clientes:', err);
@@ -38,14 +35,53 @@ app.get('/api/clientes', async (req, res) => {
   }
 });
 
-/**
- * Ruta POST: /api/clientes
- * Esta ruta permite agregar un nuevo cliente a la tabla Clientes.
- */
-app.post('/api/clientes', async (req, res) => {
-  const { Nombre, Apellido, Email, Telefono, Direccion, DNI, Contrasena } = req.body; // Asegúrate de que estos campos coincidan con tu frontend
+// POST: /api/clientes/validar - Validar unicidad de email, teléfono y contraseña
+app.post('/api/clientes/validar', async (req, res) => {
+  const { Email, Telefono, Contrasena } = req.body;
   try {
     const pool = await getConnection();
+    const result = await pool.request()
+      .input('Email', sql.NVarChar, Email)
+      .input('Telefono', sql.NVarChar, Telefono)
+      .input('Contrasena', sql.NVarChar, Contrasena)
+      .query('SELECT Email, Telefono, Contrasena FROM Clientes WHERE Email = @Email OR Telefono = @Telefono OR Contrasena = @Contrasena');
+
+    let existe = { email: false, telefono: false, contrasena: false };
+    result.recordset.forEach(c => {
+      if (c.Email === Email) existe.email = true;
+      if (c.Telefono === Telefono) existe.telefono = true;
+      if (c.Contrasena === Contrasena) existe.contrasena = true;
+    });
+    res.json(existe);
+  } catch (err) {
+    console.error('❌ Error al validar cliente:', err);
+    res.status(500).json({ error: 'Error al validar datos' });
+  }
+});
+
+// POST: /api/clientes - Registrar un nuevo cliente (con validaciones)
+app.post('/api/clientes', async (req, res) => {
+  const { Nombre, Apellido, Email, Telefono, Direccion, DNI, Contrasena } = req.body;
+  try {
+    // Validar campos obligatorios
+    if (!Nombre || !Apellido || !Email || !Telefono || !Direccion || !DNI || !Contrasena) {
+      return res.status(400).send('Faltan campos obligatorios');
+    }
+
+    const pool = await getConnection();
+    // Validar unicidad antes de registrar
+    const result = await pool.request()
+      .input('Email', sql.NVarChar, Email)
+      .input('Telefono', sql.NVarChar, Telefono)
+      .input('Contrasena', sql.NVarChar, Contrasena)
+      .query('SELECT Email, Telefono, Contrasena FROM Clientes WHERE Email = @Email OR Telefono = @Telefono OR Contrasena = @Contrasena');
+    for (let c of result.recordset) {
+      if (c.Email === Email) return res.status(409).send('Email ya registrado');
+      if (c.Telefono === Telefono) return res.status(409).send('Teléfono ya registrado');
+      if (c.Contrasena === Contrasena) return res.status(409).send('Contraseña ya registrada');
+    }
+
+    // Insertar cliente
     await pool.request()
       .input('Nombre', sql.NVarChar, Nombre)
       .input('Apellido', sql.NVarChar, Apellido)
@@ -53,7 +89,7 @@ app.post('/api/clientes', async (req, res) => {
       .input('Telefono', sql.NVarChar, Telefono)
       .input('Direccion', sql.NVarChar, Direccion)
       .input('DNI', sql.NVarChar, DNI)
-      .input('Contrasena', sql.NVarChar, Contrasena) // Considera hashear contraseñas en un entorno real
+      .input('Contrasena', sql.NVarChar, Contrasena)
       .query('INSERT INTO Clientes (Nombre, Apellido, Email, Telefono, Direccion, DNI, Contrasena) VALUES (@Nombre, @Apellido, @Email, @Telefono, @Direccion, @DNI, @Contrasena)');
     res.status(201).send('Cliente registrado exitosamente');
   } catch (err) {
@@ -62,10 +98,28 @@ app.post('/api/clientes', async (req, res) => {
   }
 });
 
-/**
- * Ruta PUT: /api/clientes/:id
- * Esta ruta permite modificar un cliente existente en la tabla Clientes.
- */
+// POST: /api/clientes/login - Login de cliente (email y contraseña)
+app.post('/api/clientes/login', async (req, res) => {
+  const { Email, Contrasena } = req.body;
+  if (!Email || !Contrasena) return res.status(400).json({ encontrado: false });
+  try {
+    const pool = await getConnection();
+    const result = await pool.request()
+      .input('Email', sql.NVarChar, Email)
+      .input('Contrasena', sql.NVarChar, Contrasena)
+      .query('SELECT ID FROM Clientes WHERE Email = @Email AND Contrasena = @Contrasena');
+    if (result.recordset.length === 1) {
+      res.json({ encontrado: true, id: result.recordset[0].ID });
+    } else {
+      res.json({ encontrado: false });
+    }
+  } catch (err) {
+    console.error('❌ Error al hacer login:', err);
+    res.status(500).json({ encontrado: false });
+  }
+});
+
+// PUT: /api/clientes/:id - Modificar cliente existente
 app.put('/api/clientes/:id', async (req, res) => {
   const { id } = req.params;
   const { Nombre, Apellido, Email, Telefono, Direccion, DNI, Contrasena } = req.body;
@@ -92,10 +146,7 @@ app.put('/api/clientes/:id', async (req, res) => {
   }
 });
 
-/**
- * Ruta DELETE: /api/clientes/:id
- * Esta ruta permite eliminar un cliente de la tabla Clientes.
- */
+// DELETE: /api/clientes/:id - Eliminar cliente
 app.delete('/api/clientes/:id', async (req, res) => {
   const { id } = req.params;
   try {

@@ -1,35 +1,32 @@
 // Función para mostrar un toast de notificación
 function mostrarToast(mensaje) {
-  const toast = document.getElementById("toast");
-  if (toast) { // Asegurarse de que el elemento existe
-    toast.textContent = mensaje;
-    toast.className = "toast show";
-    setTimeout(() => {
-      toast.className = "toast";
-    }, 3000); // El toast desaparece luego de 3 segundos
+  let toast = document.getElementById("toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast";
+    toast.className = "toast";
+    document.body.appendChild(toast);
   }
+  toast.textContent = mensaje;
+  toast.className = "toast show";
+  setTimeout(() => { toast.className = "toast"; }, 3000);
 }
 
 // Modal abrir/cerrar Usuario
 function openModal() {
   document.getElementById("registerModal").style.display = "flex";
 }
-
 function closeModal() {
   document.getElementById("registerModal").style.display = "none";
 }
-
-// Cerrar al hacer clic fuera del modal
 window.onclick = function (event) {
   const modal = document.getElementById("registerModal");
-  if (event.target == modal) {
-    closeModal();
-  }
+  if (event.target == modal) closeModal();
 };
 
-// Validación y envío de registro
-async function validarRegistro(event) { // Hacer la función asíncrona
-  event.preventDefault(); // Prevenir el envío por defecto del formulario
+// Validación y envío de registro/login
+async function validarRegistro(event) {
+  event.preventDefault();
 
   const esNuevo = document.getElementById("nuevo").checked;
   const nombre = document.getElementById("name").value.trim();
@@ -38,65 +35,98 @@ async function validarRegistro(event) { // Hacer la función asíncrona
   const password = document.getElementById("password").value.trim();
   const direccion = document.getElementById("direccion") ? document.getElementById("direccion").value.trim() : '';
   const telefono = document.getElementById("telefono") ? document.getElementById("telefono").value.trim() : '';
-  const dni = document.getElementById("dni") ? document.getElementById("dni").value.trim() : ''; // Asegúrate de que el campo DNI exista en el HTML
+  const dni = document.getElementById("dni") ? document.getElementById("dni").value.trim() : '';
 
+  // --- REGISTRO ---
   if (esNuevo) {
     if (!direccion || !dni || !telefono) {
-      mostrarToast("Por favor completá dirección, teléfono y DNI.");
-      return false;
+      mostrarToast("Complete dirección, teléfono y DNI.");
+      return;
     }
-
     if (!/^\d{7,8}$/.test(dni)) {
-      mostrarToast("El DNI debe tener entre 7 y 8 números.");
-      return false;
+      mostrarToast("DNI inválido.");
+      return;
     }
 
-    // Enviar datos al backend para nuevo registro
+    // 1. Comprobar si email, teléfono o contraseña están repetidos
+    try {
+      const check = await fetch(`http://localhost:3000/api/clientes/validar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Email: email, Telefono: telefono, Contrasena: password }),
+      });
+      if (check.ok) {
+        const existe = await check.json();
+        if (existe.email) {
+          mostrarToast("Email ya registrado.");
+          return;
+        }
+        if (existe.telefono) {
+          mostrarToast("Teléfono ya registrado.");
+          return;
+        }
+        if (existe.contrasena) {
+          mostrarToast("Contraseña ya registrada.");
+          return;
+        }
+      } else {
+        mostrarToast("Error al validar datos.");
+        return;
+      }
+    } catch (err) {
+      mostrarToast("Error de conexión al validar.");
+      return;
+    }
+
+    // 2. Registrar si todo está OK
     try {
       const response = await fetch('http://localhost:3000/api/clientes', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          Nombre: nombre,
-          Apellido: apellido,
-          Email: email,
-          Telefono: telefono,
-          Direccion: direccion,
-          DNI: dni,
-          Contrasena: password // En un entorno real, la contraseña debe ser hasheada antes de enviarla
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Nombre: nombre, Apellido: apellido, Email: email, Telefono: telefono, Direccion: direccion, DNI: dni, Contrasena: password }),
       });
-
       if (response.ok) {
-        mostrarToast("Registro exitoso. ¡Bienvenido!");
-        closeModal(); // Cerrar el modal después del registro
-        // Opcional: Redirigir o actualizar la UI
+        mostrarToast("Registrado con éxito.");
+        closeModal();
       } else {
-        const errorText = await response.text();
-        mostrarToast(`Error al registrar: ${errorText}`);
+        const errText = await response.text();
+        mostrarToast(errText || "Error al registrar.");
       }
     } catch (error) {
-      console.error('Error de red al registrar:', error);
-      mostrarToast("Error de conexión al intentar registrar.");
+      mostrarToast("Error de conexión.");
     }
-  } else {
-    // Lógica para usuarios ya registrados (iniciar sesión)
-    mostrarToast("Iniciando sesión...");
-    // Aquí iría la lógica para verificar credenciales con el backend
-    closeModal();
+    return;
   }
-  return true; // O false si la validación falla antes de enviar al backend
+
+  // --- LOGIN ---
+  try {
+    const response = await fetch('http://localhost:3000/api/clientes/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Email: email, Contrasena: password }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.encontrado) {
+        mostrarToast("Bienvenido.");
+        closeModal();
+        // Aquí podrías guardar sesión/localStorage
+      } else {
+        mostrarToast("Usuario no encontrado. Regístrese.");
+      }
+    } else {
+      mostrarToast("Usuario no encontrado. Regístrese.");
+    }
+  } catch (error) {
+    mostrarToast("Error de conexión.");
+  }
 }
 
-
+// Esperar a que cargue el DOM
 document.addEventListener("DOMContentLoaded", () => {
-  // Asignar la función validarRegistro al evento submit del formulario
   const registerForm = document.querySelector(".register-form");
-  if (registerForm) {
-    registerForm.addEventListener("submit", validarRegistro);
-  }
+  if (registerForm) registerForm.addEventListener("submit", validarRegistro);
+});
 
   // -------------------
   // Carrusel
@@ -362,5 +392,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Lógica similar para botones 'agregar' y 'editar'
   });
 
-});
+
+
 
