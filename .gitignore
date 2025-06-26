@@ -1,0 +1,12 @@
+# Dependencias
+node_modules/
+
+# Archivos de entorno
+.env
+
+# Visual Studio Code
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
