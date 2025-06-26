@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Administración - UrbanStyle</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- FontAwesome para los íconos -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="main-content">
+        <header>
+          <div class="logo">
+            <span>Urban</span><span>Style</span>
+            <a href="index.html" class="back-btn">← Volver</a>
+          </div>
+          <nav>
+            <a href="index.html#presentation">Inicio</a>
+            <a href="index.html#productos">Destacados</a>
+            <a href="index.html#marcas">Marcas</a>
+            <a href="Historial.html">Historial</a>
+            <a href="Carrito.html">
+              <img src="img/carrito.png" alt="Carrito" class="cart-img" />
+            </a>
+          </nav>
+        </header>
+        <main>
+          <h1 class="titulo-panel">Panel de Administración</h1>
+          <div class="admin-description">
+            Gestiona las entidades principales del sistema. Accede, crea, edita
+            o elimina clientes, stock, ventas y ranking de productos desde aquí.
+          </div>
+          <div
+            class="view-cards-container"
+            role="region"
+            aria-label="Paneles de administración"
+          >
+            <div class="view-card" tabindex="0" aria-label="Clientes">
+              <i class="fas fa-users"></i>
+              <h2>Clientes</h2>
+              <p>
+                Consulta, agrega, edita o elimina clientes registrados en la
+                tienda.
+              </p>
+              <a
+                href="Clientes.html"
+                class="card-btn"
+                aria-label="Administrar Clientes"
+                >ABM Clientes</a
+              >
+            </div>
+            <div class="view-card" tabindex="0" aria-label="Stock">
+              <i class="fas fa-boxes"></i>
+              <h2>Stock</h2>
+              <p>
+                Gestiona el inventario: agrega, modifica o elimina productos.
+              </p>
+              <a
+                href="Stock.html"
+                class="card-btn"
+                aria-label="Administrar Stock"
+                >ABM Stock</a
+              >
+            </div>
+            <div class="view-card" tabindex="0" aria-label="Ventas">
+              <i class="fas fa-cash-register"></i>
+              <h2>Ventas</h2>
+              <p>Consulta el historial de ventas y administra los registros.</p>
+              <a
+                href="Compras.html"
+                class="card-btn"
+                aria-label="Administrar Ventas"
+                >ABM Ventas</a
+              >
+            </div>
+            <div class="view-card" tabindex="0" aria-label="Ranking">
+              <i class="fas fa-chart-bar"></i>
+              <h2>Ranking</h2>
+              <p>
+                Revisa y administra el ranking de los productos más vendidos.
+              </p>
+              <a
+                href="Ranking.html"
+                class="card-btn"
+                aria-label="Administrar Ranking"
+                >ABM Ranking</a
+              >
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
